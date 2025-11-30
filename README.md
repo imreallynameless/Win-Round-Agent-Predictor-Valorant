@@ -109,9 +109,9 @@ For quick experiments you can call the helper that mirrors the original assignme
 from model.naive_bayes import predict_round_winner
 
 training_csv = "all_things_data/training_data/training_haven_round_data.csv"
-# Feature order: time_remaining_s, spike_planted, t1_loadout_value, t2_loadout_value,
-#                t1_duelists_alive, t1_controllers_alive, t1_initiators_alive, t1_sentinels_alive,
-#                t2_duelists_alive, t2_controllers_alive, t2_initiators_alive, t2_sentinels_alive
+# Feature order: time_remaining_s, spike_planted, atk_loadout_value, def_loadout_value,
+#                atk_duelists_alive, atk_controllers_alive, atk_initiators_alive, atk_sentinels_alive,
+#                def_duelists_alive, def_controllers_alive, def_initiators_alive, def_sentinels_alive
 round_features = [100, 0, 4100, 3400, 1, 1, 1, 0, 1, 1, 2, 1]
 
 winner, confidence = predict_round_winner(training_csv, round_features)
@@ -120,7 +120,7 @@ print(winner, confidence)  # -> "ATK", 0.78 (example)
 
 ### Per-Snapshot Predictions with Event Descriptions
 
-After training, you can score every snapshot in the test CSV (or any other dataset with the same schema) and capture a human-readable description of what changed at each point in the round (e.g., “t1 lost 1 sentinel”, “spike planted”).
+After training, you can score every snapshot in the test CSV (or any other dataset with the same schema) and capture a human-readable description of what changed at each point in the round (e.g., "ATK lost 1 sentinel", "spike planted").
 
 ```bash
 python -m model.predict_rounds \

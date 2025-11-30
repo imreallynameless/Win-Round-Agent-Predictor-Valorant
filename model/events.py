@@ -8,14 +8,14 @@ from typing import Dict, List
 import pandas as pd
 
 ROLE_COLUMNS: Dict[str, str] = {
-    "t1_duelists_alive": "t1 duelist",
-    "t1_controllers_alive": "t1 controller",
-    "t1_initiators_alive": "t1 initiator",
-    "t1_sentinels_alive": "t1 sentinel",
-    "t2_duelists_alive": "t2 duelist",
-    "t2_controllers_alive": "t2 controller",
-    "t2_initiators_alive": "t2 initiator",
-    "t2_sentinels_alive": "t2 sentinel",
+    "atk_duelists_alive": "ATK duelist",
+    "atk_controllers_alive": "ATK controller",
+    "atk_initiators_alive": "ATK initiator",
+    "atk_sentinels_alive": "ATK sentinel",
+    "def_duelists_alive": "DEF duelist",
+    "def_controllers_alive": "DEF controller",
+    "def_initiators_alive": "DEF initiator",
+    "def_sentinels_alive": "DEF sentinel",
 }
 
 

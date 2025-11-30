@@ -12,16 +12,16 @@ import pandas as pd
 DEFAULT_FEATURE_COLUMNS: List[str] = [
     "time_remaining_s",
     "spike_planted",
-    "t1_loadout_value",
-    "t2_loadout_value",
-    "t1_duelists_alive",
-    "t1_controllers_alive",
-    "t1_initiators_alive",
-    "t1_sentinels_alive",
-    "t2_duelists_alive",
-    "t2_controllers_alive",
-    "t2_initiators_alive",
-    "t2_sentinels_alive",
+    "atk_loadout_value",
+    "def_loadout_value",
+    "atk_duelists_alive",
+    "atk_controllers_alive",
+    "atk_initiators_alive",
+    "atk_sentinels_alive",
+    "def_duelists_alive",
+    "def_controllers_alive",
+    "def_initiators_alive",
+    "def_sentinels_alive",
 ]
 
 DEFAULT_TARGET_COLUMN = "round_winner"

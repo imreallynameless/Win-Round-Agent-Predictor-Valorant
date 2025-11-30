@@ -259,6 +259,9 @@ def process_matches(mode):
             spike_planted = 0
             plant_time = 0
             
+            # Determine which team number is attacking this round
+            defender_team = 3 - attacker_team if attacker_team else 2
+            
             for ev in r_events:
                 current_time = ev['roundTimeMillis']
                 
@@ -281,25 +284,38 @@ def process_matches(mode):
                     time_left = 100000 - current_time
                 if time_left < 0: time_left = 0
 
+                # Map team stats to ATK/DEF based on attacker_team
+                atk_team = attacker_team if attacker_team else 1
+                def_team = defender_team
+                
+                atk_loadout = t1_loadout if atk_team == 1 else t2_loadout
+                def_loadout = t1_loadout if def_team == 1 else t2_loadout
+
+                # t1 = ATK team, t2 = DEF team (for clarity)
+                t1_side = "ATK" if atk_team == 1 else "DEF"
+                t2_side = "DEF" if atk_team == 1 else "ATK"
+                
                 row = {
                     "match_id": mid,
                     "round_number": r_num,
-                    "t1_score": t1_score,
-                    "t2_score": t2_score,
+                    "t1_side": t1_side,
+                    "t2_side": t2_side,
+                    "atk_score": t1_score if atk_team == 1 else t2_score,
+                    "def_score": t1_score if def_team == 1 else t2_score,
                     "time_remaining_s": int(time_left / 1000),
                     "spike_planted": spike_planted,
-                    "t1_loadout_value": t1_loadout,
-                    "t2_loadout_value": t2_loadout,
+                    "atk_loadout_value": atk_loadout,
+                    "def_loadout_value": def_loadout,
                     
-                    "t1_duelists_alive": alive[1]["Duelist"],
-                    "t1_controllers_alive": alive[1]["Controller"],
-                    "t1_initiators_alive": alive[1]["Initiator"],
-                    "t1_sentinels_alive": alive[1]["Sentinel"],
+                    "atk_duelists_alive": alive[atk_team]["Duelist"],
+                    "atk_controllers_alive": alive[atk_team]["Controller"],
+                    "atk_initiators_alive": alive[atk_team]["Initiator"],
+                    "atk_sentinels_alive": alive[atk_team]["Sentinel"],
                     
-                    "t2_duelists_alive": alive[2]["Duelist"],
-                    "t2_controllers_alive": alive[2]["Controller"],
-                    "t2_initiators_alive": alive[2]["Initiator"],
-                    "t2_sentinels_alive": alive[2]["Sentinel"],
+                    "def_duelists_alive": alive[def_team]["Duelist"],
+                    "def_controllers_alive": alive[def_team]["Controller"],
+                    "def_initiators_alive": alive[def_team]["Initiator"],
+                    "def_sentinels_alive": alive[def_team]["Sentinel"],
                     
                     "round_winner": winner
                 }
