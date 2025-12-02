@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 reader = easyocr.Reader(['en'])
-img = cv2.imread("screenshots/val.png")
+img = cv2.imread("screenshots/val3.png")
 
 # =============================================================================
 # CREDIT COST DICTIONARIES
@@ -54,38 +54,38 @@ SHIELD_COSTS = {
 AGENT_ABILITY_COSTS = {
     # Duelists
     "Iso": {"C": 200, "Q": 200},
-    "Jett": {"C": 200, "Q": 150},
-    "Neon": {"C": 200, "Q": 200},
-    "Phoenix": {"C": 200, "Q": 250},
-    "Raze": {"C": 200, "Q": 300},
-    "Reyna": {"C": 200, "Q": 200},
-    "Waylay": {"C": 200, "Q": 250},
-    "Yoru": {"C": 200, "Q": 250},
+    "Jett": {"C": 400, "Q": 150},
+    "Neon": {"C": 300, "Q": 200},
+    "Phoenix": {"C": 150, "Q": 200},
+    "Raze": {"C": 300, "Q": 400},
+    "Reyna": {"C": 500, "Q": 0},
+    "Waylay": {"C": 300, "Q": 300},
+    "Yoru": {"C": 200, "Q": 500},
     
     # Initiators
-    "Breach": {"C": 200, "Q": 250},
-    "Fade": {"C": 200, "Q": 250},
-    "Gekko": {"C": 200, "Q": 250},
-    "KAYO": {"C": 200, "Q": 250},
+    "Breach": {"C": 200, "Q": 500},
+    "Fade": {"C": 500, "Q": 250},
+    "Gekko": {"C": 250, "Q": 300},
+    "KAYO": {"C": 200, "Q": 500},
     "Skye": {"C": 250, "Q": 250},
-    "Sova": {"C": 250, "Q": 300},
-    "Tejo": {"C": 200, "Q": 250},
+    "Sova": {"C": 400, "Q": 300},
+    "Tejo": {"C": 400, "Q": 200},
     
     # Sentinels
-    "Chamber": {"C": 200, "Q": 150},
-    "Cypher": {"C": 200, "Q": 250},
-    "Deadlock": {"C": 200, "Q": 250},
-    "Killjoy": {"C": 200, "Q": 250},
-    "Sage": {"C": 200, "Q": 250},
-    "Vyse": {"C": 200, "Q": 250},
+    "Chamber": {"C": 200, "Q": 400},
+    "Cypher": {"C": 400, "Q": 200},
+    "Deadlock": {"C": 400, "Q": 400},
+    "Killjoy": {"C": 400, "Q": 200},
+    "Sage": {"C": 400, "Q": 400},
+    "Vyse": {"C": 300, "Q": 200},
     
     # Controllers
     "Astra": {"C": 200, "Q": 200},
-    "Brimstone": {"C": 250, "Q": 250},
+    "Brimstone": {"C": 200, "Q": 250},
     "Clove": {"C": 200, "Q": 250},
-    "Harbor": {"C": 250, "Q": 250},
-    "Omen": {"C": 150, "Q": 300},
-    "Viper": {"C": 200, "Q": 200},
+    "Harbor": {"C": 200, "Q": 300},
+    "Omen": {"C": 200, "Q": 250},
+    "Viper": {"C": 300, "Q": 200},
 }
 
 # Storing the x coordinate, y coordinate, width, and height of all regions of interest
@@ -122,72 +122,73 @@ t2_players_agent_xywh = [
 ]
 
 # Weapon icon ROI coordinates (x, y, w, h) for each player slot
-# Calibrated from val.png using coords.py
+# Calibrated from val3.png using coords.py
 t1_weapon_xywh = [
-    (201, 603, 84, 32),
-    (201, 710, 87, 27),
-    (200, 816, 80, 31),
-    (202, 919, 79, 31),
-    (201, 1023, 82, 38)
+    (200, 605, 80, 30),
+    (200, 710, 80, 30),
+    (200, 815, 80, 30),
+    (200, 920, 80, 30),
+    (200, 1025, 80, 30)
 ]
 
 t2_weapon_xywh = [
-    (1638, 603, 87, 28),
-    (1641, 709, 84, 29),
-    (1641, 812, 81, 34),
-    (1640, 922, 87, 28),
-    (1629, 1034, 93, 30)
+    (1640, 605, 80, 30),
+    (1640, 710, 80, 30),
+    (1640, 815, 80, 30),
+    (1640, 920, 80, 30),
+    (1640, 1025, 80, 30)
 ]
 
 # Shield value ROI coordinates (the small badge showing 25 or 50)
+# Calibrated from val3.png using coords.py
 t1_shield_xywh = [
-    (185, 430, 30, 20),
-    (185, 510, 30, 20),
-    (185, 590, 30, 20),
-    (185, 670, 30, 20),
-    (185, 750, 30, 20)
+    (245, 560, 35, 25),
+    (245, 663, 35, 25),
+    (245, 773, 35, 25),
+    (245, 879, 35, 25),
+    (245, 986, 35, 25)
 ]
 
 t2_shield_xywh = [
-    (1700, 430, 30, 20),
-    (1700, 510, 30, 20),
-    (1700, 590, 30, 20),
-    (1700, 670, 30, 20),
-    (1700, 750, 30, 20)
+    (1645, 560, 35, 25),
+    (1645, 663, 35, 25),
+    (1645, 773, 35, 25),
+    (1645, 879, 35, 25),
+    (1645, 986, 35, 25)
 ]
 
 # Ability icon ROI coordinates - C ability (first) and Q ability (second)
-# Each ability icon is about 20x20 pixels, arranged in a row
+# Calibrated from val3.png using coords.py
 t1_ability_c_xywh = [
-    (68, 458, 20, 20),
-    (68, 538, 20, 20),
-    (68, 618, 20, 20),
-    (68, 698, 20, 20),
-    (68, 778, 20, 20)
+    (80, 605, 35, 30),
+    (80, 710, 35, 30),
+    (80, 815, 35, 30),
+    (80, 920, 35, 30),
+    (80, 1025, 35, 30)
 ]
 
 t1_ability_q_xywh = [
-    (93, 458, 20, 20),
-    (93, 538, 20, 20),
-    (93, 618, 20, 20),
-    (93, 698, 20, 20),
-    (93, 778, 20, 20)
+    (120, 605, 35, 30),
+    (120, 710, 35, 30),
+    (120, 815, 35, 30),
+    (120, 920, 35, 30),
+    (120, 1025, 35, 30)
 ]
 
 t2_ability_c_xywh = [
-    (1368, 458, 20, 20),
-    (1368, 538, 20, 20),
-    (1368, 618, 20, 20),
-    (1368, 698, 20, 20),
-    (1368, 778, 20, 20)
+    (1725, 605, 35, 30),
+    (1725, 710, 35, 30),
+    (1725, 815, 35, 30),
+    (1725, 920, 35, 30),
+    (1725, 1025, 35, 30)
 ]
 
 t2_ability_q_xywh = [
-    (1343, 458, 20, 20),
-    (1343, 538, 20, 20),
-    (1343, 618, 20, 20),
-    (1343, 698, 20, 20),
-    (1343, 778, 20, 20)
+    (1765, 605, 35, 30),
+    (1765, 710, 35, 30),
+    (1765, 815, 35, 30),
+    (1765, 920, 35, 30),
+    (1765, 1025, 35, 30)
 ]
 
 # Helper functions
@@ -491,7 +492,7 @@ def get_player_weapon(img, t, player_idx, templates):
 
 def is_ability_available(img, t, player_idx, ability):
     """
-    purpose: detect if an ability is available (bright) or not (dim/greyed out)
+    purpose: detect if an ability is available by checking for white pixels (vs gray)
 
     inputs:
     img- the gameplay screenshot
@@ -500,7 +501,7 @@ def is_ability_available(img, t, player_idx, ability):
     ability- "C" or "Q"
 
     output:
-    True if ability is available (bright), False if not (dim)
+    True if ability is available (has white pixels), False if grayed out
     """
     # Select the correct ROI coordinates
     if t == 1:
@@ -517,13 +518,17 @@ def is_ability_available(img, t, player_idx, ability):
     x, y, w, h = xywh[player_idx]
     roi = img[y:y+h, x:x+w]
     
-    # Convert to grayscale and calculate average brightness
+    # Convert to grayscale
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    avg_brightness = np.mean(gray)
     
-    # Threshold: if brightness > 80, ability is available (on)
-    # This threshold may need calibration based on actual screenshots
-    return avg_brightness > 80
+    # Count pixels that are white-ish (brightness > 200)
+    # Available abilities have white elements, unavailable are gray
+    white_pixels = np.sum(gray > 200)
+    total_pixels = gray.size
+    white_ratio = white_pixels / total_pixels
+    
+    # If more than 2% of pixels are white, ability is available
+    return white_ratio > 0.02
 
 def get_player_shield(img, t, player_idx):
     """
