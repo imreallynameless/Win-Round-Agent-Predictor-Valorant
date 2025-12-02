@@ -653,115 +653,125 @@ def get_team_credits(img, t, players_alive, agents_alive, gun_templates):
     
     return weapon_credits, shield_credits, ability_credits, total_credits
 
-# Aggregate scraped data to be fed into the classifier model
-
-time_remaining, spike_planted = get_time_remaining(img)
-print(f"Time remaining: {time_remaining}")
-
-print("Spike planted: " + str(spike_planted))
-
-t1_players_alive = get_players_alive(img, 1)
-t2_players_alive = get_players_alive(img, 2)
-agent_templates1, agent_templates2 = load_agent_icons()
-t1_agents_alive = get_alive_player_agents(img, 1, t1_players_alive, agent_templates1)
-t2_agents_alive = get_alive_player_agents(img, 2, t2_players_alive, agent_templates2)
-
-t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive = get_roles_alive(t1_agents_alive)
-t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive = get_roles_alive(t2_agents_alive)
-
-# Load gun templates for weapon detection
-gun_templates1, gun_templates2 = load_gun_icons()
-
-# Calculate team credits (now returns breakdown)
-print("\n=== CREDIT BREAKDOWN ===")
-t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits = get_team_credits(img, 1, t1_players_alive, t1_agents_alive, gun_templates1)
-print(f"  Team 1 TOTAL: {t1_total_credits}")
-print()
-t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits = get_team_credits(img, 2, t2_players_alive, t2_agents_alive, gun_templates2)
-print(f"  Team 2 TOTAL: {t2_total_credits}")
-print("========================\n")
-
-# Currently t1 and t2 refer to the teams on the left and right, need to convert to attacking and defending team by identifying colours
-atk_team = get_atk_team(img)
-
-if atk_team == 1:
-    atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
-    def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
-    atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
-    def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
-else:
-    atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
-    def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
-    atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
-    def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
-
-print("Atk agents alive: " + str(atk_agents_alive))
-print(f"Atk - Duelists: {atk_duelists_alive}")
-print(f"Atk - Initiators: {atk_initiators_alive}")
-print(f"Atk - Sentinels: {atk_sentinels_alive}")
-print(f"Atk - Controllers: {atk_controllers_alive}")
-print(f"Atk - Weapon Credits: {atk_weapon_credits}")
-print(f"Atk - Shield Credits: {atk_shield_credits}")
-print(f"Atk - Ability Credits: {atk_ability_credits}")
-print(f"Atk - Total Credits: {atk_credits}")
-print("======================")
-print("Def agents alive: " + str(def_agents_alive))
-print(f"Def - Duelists: {def_duelists_alive}")
-print(f"Def - Initiators: {def_initiators_alive}")
-print(f"Def - Sentinels: {def_sentinels_alive}")
-print(f"Def - Controllers: {def_controllers_alive}")
-print(f"Def - Weapon Credits: {def_weapon_credits}")
-print(f"Def - Shield Credits: {def_shield_credits}")
-print(f"Def - Ability Credits: {def_ability_credits}")
-print(f"Def - Total Credits: {def_credits}")
-
 # =============================================================================
-# MODEL PREDICTION
+# MAIN - Only runs when opencv.py is executed directly
 # =============================================================================
 
-# Load the trained model and make prediction
-model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'naive_bayes_stats.json')
-model = GaussianNaiveBayes.load(model_path)
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Analyze a Valorant screenshot")
+    parser.add_argument("--map", default="haven", help="Map name for model (default: haven)")
+    args = parser.parse_args()
+    
+    # Aggregate scraped data to be fed into the classifier model
+    time_remaining, spike_planted = get_time_remaining(img)
+    print(f"Time remaining: {time_remaining}")
+    print("Spike planted: " + str(spike_planted))
 
-# Prepare features for prediction (matching model's input_columns order)
-features = pd.DataFrame([{
-    "time_remaining_s": time_remaining if time_remaining else 0,
-    "spike_planted": 1 if spike_planted else 0,
-    "atk_loadout_value": atk_credits,
-    "def_loadout_value": def_credits,
-    "atk_duelists_alive": atk_duelists_alive,
-    "atk_controllers_alive": atk_controllers_alive,
-    "atk_initiators_alive": atk_initiators_alive,
-    "atk_sentinels_alive": atk_sentinels_alive,
-    "def_duelists_alive": def_duelists_alive,
-    "def_controllers_alive": def_controllers_alive,
-    "def_initiators_alive": def_initiators_alive,
-    "def_sentinels_alive": def_sentinels_alive,
-}])
+    t1_players_alive = get_players_alive(img, 1)
+    t2_players_alive = get_players_alive(img, 2)
+    agent_templates1, agent_templates2 = load_agent_icons()
+    t1_agents_alive = get_alive_player_agents(img, 1, t1_players_alive, agent_templates1)
+    t2_agents_alive = get_alive_player_agents(img, 2, t2_players_alive, agent_templates2)
 
-# Get prediction
-probabilities = model.predict_proba(features).iloc[0]
-predicted_winner = probabilities.idxmax()
-predicted_confidence = float(probabilities[predicted_winner])
-atk_percentage = float(probabilities.get("ATK", 0)) * 100
-def_percentage = float(probabilities.get("DEF", 0)) * 100
+    t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive = get_roles_alive(t1_agents_alive)
+    t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive = get_roles_alive(t2_agents_alive)
 
-# Output prediction
-print("\n=== ROUND WIN PREDICTION ===")
-print(f"predicted_winner: {predicted_winner}")
-print(f"predicted_confidence: {predicted_confidence:.4f}")
-print(f"time_remaining_s: {time_remaining if time_remaining else 0}")
-print(f"spike_planted: {1 if spike_planted else 0}")
-print(f"atk_loadout_value: {atk_credits}")
-print(f"def_loadout_value: {def_credits}")
-print(f"atk_duelists_alive: {atk_duelists_alive}")
-print(f"atk_controllers_alive: {atk_controllers_alive}")
-print(f"atk_initiators_alive: {atk_initiators_alive}")
-print(f"atk_sentinels_alive: {atk_sentinels_alive}")
-print(f"def_duelists_alive: {def_duelists_alive}")
-print(f"def_controllers_alive: {def_controllers_alive}")
-print(f"def_initiators_alive: {def_initiators_alive}")
-print(f"def_sentinels_alive: {def_sentinels_alive}")
-print(f"ATK_percentage: {atk_percentage:.2f}%")
-print(f"DEF_percentage: {def_percentage:.2f}%")
-print("=============================")
+    # Load gun templates for weapon detection
+    gun_templates1, gun_templates2 = load_gun_icons()
+
+    # Calculate team credits (now returns breakdown)
+    print("\n=== CREDIT BREAKDOWN ===")
+    t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits = get_team_credits(img, 1, t1_players_alive, t1_agents_alive, gun_templates1)
+    print(f"  Team 1 TOTAL: {t1_total_credits}")
+    print()
+    t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits = get_team_credits(img, 2, t2_players_alive, t2_agents_alive, gun_templates2)
+    print(f"  Team 2 TOTAL: {t2_total_credits}")
+    print("========================\n")
+
+    # Currently t1 and t2 refer to the teams on the left and right, need to convert to attacking and defending team by identifying colours
+    atk_team = get_atk_team(img)
+
+    if atk_team == 1:
+        atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
+        def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
+        atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
+        def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
+    else:
+        atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
+        def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
+        atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
+        def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
+
+    print("Atk agents alive: " + str(atk_agents_alive))
+    print(f"Atk - Duelists: {atk_duelists_alive}")
+    print(f"Atk - Initiators: {atk_initiators_alive}")
+    print(f"Atk - Sentinels: {atk_sentinels_alive}")
+    print(f"Atk - Controllers: {atk_controllers_alive}")
+    print(f"Atk - Weapon Credits: {atk_weapon_credits}")
+    print(f"Atk - Shield Credits: {atk_shield_credits}")
+    print(f"Atk - Ability Credits: {atk_ability_credits}")
+    print(f"Atk - Total Credits: {atk_credits}")
+    print("======================")
+    print("Def agents alive: " + str(def_agents_alive))
+    print(f"Def - Duelists: {def_duelists_alive}")
+    print(f"Def - Initiators: {def_initiators_alive}")
+    print(f"Def - Sentinels: {def_sentinels_alive}")
+    print(f"Def - Controllers: {def_controllers_alive}")
+    print(f"Def - Weapon Credits: {def_weapon_credits}")
+    print(f"Def - Shield Credits: {def_shield_credits}")
+    print(f"Def - Ability Credits: {def_ability_credits}")
+    print(f"Def - Total Credits: {def_credits}")
+
+    # =============================================================================
+    # MODEL PREDICTION
+    # =============================================================================
+
+    # Load the trained model and make prediction (use map-specific model)
+    model_path = os.path.join(os.path.dirname(__file__), '..', 'models', args.map.lower(), 'naive_bayes_stats.json')
+    model = GaussianNaiveBayes.load(model_path)
+
+    # Prepare features for prediction (matching model's input_columns order)
+    features = pd.DataFrame([{
+        "time_remaining_s": time_remaining if time_remaining else 0,
+        "spike_planted": 1 if spike_planted else 0,
+        "atk_loadout_value": atk_credits,
+        "def_loadout_value": def_credits,
+        "atk_duelists_alive": atk_duelists_alive,
+        "atk_controllers_alive": atk_controllers_alive,
+        "atk_initiators_alive": atk_initiators_alive,
+        "atk_sentinels_alive": atk_sentinels_alive,
+        "def_duelists_alive": def_duelists_alive,
+        "def_controllers_alive": def_controllers_alive,
+        "def_initiators_alive": def_initiators_alive,
+        "def_sentinels_alive": def_sentinels_alive,
+    }])
+
+    # Get prediction
+    probabilities = model.predict_proba(features).iloc[0]
+    predicted_winner = probabilities.idxmax()
+    predicted_confidence = float(probabilities[predicted_winner])
+    atk_percentage = float(probabilities.get("ATK", 0)) * 100
+    def_percentage = float(probabilities.get("DEF", 0)) * 100
+
+    # Output prediction
+    print("\n=== ROUND WIN PREDICTION ===")
+    print(f"Map: {args.map.upper()}")
+    print(f"predicted_winner: {predicted_winner}")
+    print(f"predicted_confidence: {predicted_confidence:.4f}")
+    print(f"time_remaining_s: {time_remaining if time_remaining else 0}")
+    print(f"spike_planted: {1 if spike_planted else 0}")
+    print(f"atk_loadout_value: {atk_credits}")
+    print(f"def_loadout_value: {def_credits}")
+    print(f"atk_duelists_alive: {atk_duelists_alive}")
+    print(f"atk_controllers_alive: {atk_controllers_alive}")
+    print(f"atk_initiators_alive: {atk_initiators_alive}")
+    print(f"atk_sentinels_alive: {atk_sentinels_alive}")
+    print(f"def_duelists_alive: {def_duelists_alive}")
+    print(f"def_controllers_alive: {def_controllers_alive}")
+    print(f"def_initiators_alive: {def_initiators_alive}")
+    print(f"def_sentinels_alive: {def_sentinels_alive}")
+    print(f"ATK_percentage: {atk_percentage:.2f}%")
+    print(f"DEF_percentage: {def_percentage:.2f}%")
+    print("=============================")
