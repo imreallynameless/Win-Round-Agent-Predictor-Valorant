@@ -3,10 +3,16 @@
 import cv2
 import easyocr
 import os
+import sys
 import numpy as np
+import pandas as pd
+
+# Add parent directory to path to import model
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from model.naive_bayes import GaussianNaiveBayes
 
 reader = easyocr.Reader(['en'])
-img = cv2.imread("screenshots/val3.png")
+img = cv2.imread("screenshots/val8_2v2retake.png")
 
 # =============================================================================
 # CREDIT COST DICTIONARIES
@@ -236,7 +242,7 @@ def load_gun_icons():
                 templates1[name] = img.astype(np.uint8)
                 templates2[name] = cv2.flip(img, 1).astype(np.uint8)
 
-    return templates1, templates2
+    return templates2, templates1
 
 def load_shield_icons():
     """
@@ -708,3 +714,54 @@ print(f"Def - Weapon Credits: {def_weapon_credits}")
 print(f"Def - Shield Credits: {def_shield_credits}")
 print(f"Def - Ability Credits: {def_ability_credits}")
 print(f"Def - Total Credits: {def_credits}")
+
+# =============================================================================
+# MODEL PREDICTION
+# =============================================================================
+
+# Load the trained model and make prediction
+model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'naive_bayes_stats.json')
+model = GaussianNaiveBayes.load(model_path)
+
+# Prepare features for prediction (matching model's input_columns order)
+features = pd.DataFrame([{
+    "time_remaining_s": time_remaining if time_remaining else 0,
+    "spike_planted": 1 if spike_planted else 0,
+    "atk_loadout_value": atk_credits,
+    "def_loadout_value": def_credits,
+    "atk_duelists_alive": atk_duelists_alive,
+    "atk_controllers_alive": atk_controllers_alive,
+    "atk_initiators_alive": atk_initiators_alive,
+    "atk_sentinels_alive": atk_sentinels_alive,
+    "def_duelists_alive": def_duelists_alive,
+    "def_controllers_alive": def_controllers_alive,
+    "def_initiators_alive": def_initiators_alive,
+    "def_sentinels_alive": def_sentinels_alive,
+}])
+
+# Get prediction
+probabilities = model.predict_proba(features).iloc[0]
+predicted_winner = probabilities.idxmax()
+predicted_confidence = float(probabilities[predicted_winner])
+atk_percentage = float(probabilities.get("ATK", 0)) * 100
+def_percentage = float(probabilities.get("DEF", 0)) * 100
+
+# Output prediction
+print("\n=== ROUND WIN PREDICTION ===")
+print(f"predicted_winner: {predicted_winner}")
+print(f"predicted_confidence: {predicted_confidence:.4f}")
+print(f"time_remaining_s: {time_remaining if time_remaining else 0}")
+print(f"spike_planted: {1 if spike_planted else 0}")
+print(f"atk_loadout_value: {atk_credits}")
+print(f"def_loadout_value: {def_credits}")
+print(f"atk_duelists_alive: {atk_duelists_alive}")
+print(f"atk_controllers_alive: {atk_controllers_alive}")
+print(f"atk_initiators_alive: {atk_initiators_alive}")
+print(f"atk_sentinels_alive: {atk_sentinels_alive}")
+print(f"def_duelists_alive: {def_duelists_alive}")
+print(f"def_controllers_alive: {def_controllers_alive}")
+print(f"def_initiators_alive: {def_initiators_alive}")
+print(f"def_sentinels_alive: {def_sentinels_alive}")
+print(f"ATK_percentage: {atk_percentage:.2f}%")
+print(f"DEF_percentage: {def_percentage:.2f}%")
+print("=============================")
