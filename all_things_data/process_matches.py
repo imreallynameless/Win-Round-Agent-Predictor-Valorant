@@ -114,11 +114,20 @@ def infer_teams(data):
             
     return res
 
-def process_matches(mode):
-    base_dir = f"{mode}_data"
-    match_list_file = os.path.join(base_dir, f"{mode}_matches.txt")
-    output_csv = os.path.join(base_dir, f"{mode}_haven_round_data.csv")
-    data_dir = os.path.join(base_dir, f"{mode}_data_json")
+def process_matches(folder):
+    # Extract mode and map name from folder name
+    # e.g., "training_data_haven" -> mode="training", map_name="haven"
+    parts = folder.rstrip('/').split('_')
+    if len(parts) >= 3:
+        mode = parts[0]  # training or test
+        map_name = parts[-1]  # haven, abyss, etc.
+    else:
+        mode = parts[0]
+        map_name = "unknown"
+    
+    match_list_file = os.path.join(folder, f"{mode}_matches.txt")
+    output_csv = os.path.join(folder, f"{mode}_{map_name}_round_data.csv")
+    data_dir = os.path.join(folder, f"{mode}_data_json")
 
     if not os.path.exists(match_list_file):
         print(f"No {match_list_file} found.")
@@ -329,8 +338,8 @@ def process_matches(mode):
     print(f"Processed {len(all_rows)} events into {output_csv}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process matches for training or test data.")
-    parser.add_argument("mode", choices=["training", "test"], help="Mode: 'training' or 'test'")
+    parser = argparse.ArgumentParser(description="Process matches from a data folder.")
+    parser.add_argument("folder", help="Data folder name (e.g., 'training_data_haven', 'test_data_abyss')")
     args = parser.parse_args()
     
-    process_matches(args.mode)
+    process_matches(args.folder)

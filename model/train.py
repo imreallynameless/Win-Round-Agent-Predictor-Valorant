@@ -30,8 +30,18 @@ except ImportError:  # pragma: no cover
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DATASET = REPO_ROOT / "all_things_data" / "training_data" / "training_haven_round_data.csv"
-DEFAULT_TEST_DATASET = REPO_ROOT / "all_things_data" / "test_data" / "test_haven_round_data.csv"
+
+
+def get_default_paths(map_name: str) -> dict:
+    """Get default paths based on map name."""
+    map_lower = map_name.lower()
+    return {
+        "dataset": REPO_ROOT / "all_things_data" / f"training_data_{map_lower}" / f"training_{map_lower}_round_data.csv",
+        "test_dataset": REPO_ROOT / "all_things_data" / f"test_data_{map_lower}" / f"test_{map_lower}_round_data.csv",
+        "model_out": REPO_ROOT / "models" / map_lower / "naive_bayes_stats.json",
+        "metrics_out": REPO_ROOT / "models" / map_lower / "training_metrics.json",
+        "tree_model_out": REPO_ROOT / "models" / map_lower / "random_forest.pkl",
+    }
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,10 +49,16 @@ def parse_args() -> argparse.Namespace:
         description="Train Valorant round prediction models."
     )
     parser.add_argument(
+        "--map",
+        type=str,
+        default="haven",
+        help="Map name (e.g., 'haven', 'ascent', 'abyss'). Sets default paths automatically.",
+    )
+    parser.add_argument(
         "--dataset",
         type=Path,
-        default=DEFAULT_DATASET,
-        help="Path to the training CSV.",
+        default=None,
+        help="Path to the training CSV (overrides --map default).",
     )
     parser.add_argument(
         "--features",
@@ -70,14 +86,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-out",
         type=Path,
-        default=Path("models/naive_bayes_stats.json"),
-        help="Where to persist the Naive Bayes model stats.",
+        default=None,
+        help="Where to persist the Naive Bayes model stats (overrides --map default).",
     )
     parser.add_argument(
         "--metrics-out",
         type=Path,
-        default=Path("models/training_metrics.json"),
-        help="Where to persist evaluation metrics.",
+        default=None,
+        help="Where to persist evaluation metrics (overrides --map default).",
     )
     parser.add_argument(
         "--with-pca",
@@ -104,8 +120,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--tree-model-out",
         type=Path,
-        default=Path("models/random_forest.pkl"),
-        help="Optional path to persist the tree baseline (requires joblib).",
+        default=None,
+        help="Optional path to persist the tree baseline (overrides --map default).",
     )
     parser.add_argument(
         "--tree-estimators",
@@ -122,8 +138,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--test-dataset",
         type=Path,
-        default=DEFAULT_TEST_DATASET,
-        help="Held-out test CSV used for final reporting.",
+        default=None,
+        help="Held-out test CSV (overrides --map default).",
     )
     parser.add_argument(
         "--skip-test",
@@ -137,8 +153,23 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
     if args is None:
         args = parse_args()
 
+    # Get default paths based on map name
+    defaults = get_default_paths(args.map)
+    
+    # Use provided paths or fall back to map-based defaults
+    dataset_path = args.dataset or defaults["dataset"]
+    test_dataset_path = args.test_dataset or defaults["test_dataset"]
+    model_out = args.model_out or defaults["model_out"]
+    metrics_out = args.metrics_out or defaults["metrics_out"]
+    tree_model_out = args.tree_model_out or defaults["tree_model_out"]
+    
+    print(f"Training model for map: {args.map}")
+    print(f"Dataset: {dataset_path}")
+    print(f"Model output: {model_out}")
+    print()
+
     dataset = data_loader.load_round_dataset(
-        args.dataset,
+        dataset_path,
         feature_columns=args.features or data_loader.DEFAULT_FEATURE_COLUMNS,
     )
     train_X, val_X, train_y, val_y = data_loader.train_validation_split(
@@ -160,9 +191,10 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
         label_mapping=dataset.label_mapping,
         preprocessing=preprocessing_steps,
     )
-    nb_model.save(args.model_out)
+    nb_model.save(model_out)
 
     metrics: Dict[str, Any] = {
+        "map": args.map,
         "naive_bayes": {
             "train": evaluate_model(nb_model, train_X, train_y, dataset.label_mapping),
             "val": evaluate_model(nb_model, val_X, val_y, dataset.label_mapping),
@@ -186,14 +218,14 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
             "train": evaluate_tree(tree_result, train_X, train_y),
             "val": evaluate_tree(tree_result, val_X, val_y),
         }
-        maybe_save_tree_model(tree_result, args.tree_model_out)
+        maybe_save_tree_model(tree_result, tree_model_out)
 
-    if not args.skip_test and args.test_dataset:
-        if args.test_dataset.exists():
+    if not args.skip_test and test_dataset_path:
+        if test_dataset_path.exists():
             feature_order = list(train_X.columns)
             label_order = [dataset.label_mapping[idx] for idx in sorted(dataset.label_mapping)]
             test_data = data_loader.load_round_dataset(
-                args.test_dataset,
+                test_dataset_path,
                 feature_columns=feature_order,
                 label_order=label_order,
             )
@@ -205,9 +237,9 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
                     tree_result, test_data.features, test_data.labels
                 )
         else:
-            print(f"Warning: test dataset {args.test_dataset} not found; skipping test evaluation.")
+            print(f"Warning: test dataset {test_dataset_path} not found; skipping test evaluation.")
 
-    save_metrics(metrics, args.metrics_out)
+    save_metrics(metrics, metrics_out)
     print("Training complete.")
     print(json.dumps(metrics, indent=2))
 
@@ -310,4 +342,3 @@ def save_metrics(payload: Dict[str, Any], output_path: Path) -> None:
 
 if __name__ == "__main__":
     main()
-

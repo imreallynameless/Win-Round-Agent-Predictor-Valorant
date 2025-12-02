@@ -1,0 +1,60 @@
+{
+  "map": "ascent",
+  "naive_bayes": {
+    "train": {
+      "accuracy": 0.7619047619047619,
+      "confusion_matrix": {
+        "ATK": {
+          "ATK": 1934,
+          "DEF": 788
+        },
+        "DEF": {
+          "ATK": 587,
+          "DEF": 2466
+        }
+      },
+      "support": {
+        "DEF": 3053,
+        "ATK": 2722
+      }
+    },
+    "val": {
+      "accuracy": 0.7394317394317395,
+      "confusion_matrix": {
+        "ATK": {
+          "ATK": 473,
+          "DEF": 207
+        },
+        "DEF": {
+          "ATK": 169,
+          "DEF": 594
+        }
+      },
+      "support": {
+        "DEF": 763,
+        "ATK": 680
+      }
+    },
+    "preprocessing": {
+      "enabled": false,
+      "steps": []
+    },
+    "test": {
+      "accuracy": 0.6918267083519428,
+      "confusion_matrix": {
+        "ATK": {
+          "ATK": 695,
+          "DEF": 482
+        },
+        "DEF": {
+          "ATK": 208,
+          "DEF": 854
+        }
+      },
+      "support": {
+        "ATK": 1177,
+        "DEF": 1062
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 {
+  "map": "haven",
   "naive_bayes": {
     "train": {
       "accuracy": 0.7581872312272577,

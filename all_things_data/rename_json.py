@@ -2,10 +2,17 @@ import os
 import json
 import argparse
 
-def main(mode):
-    base_dir = f"{mode}_data"
-    mapping_file = os.path.join(base_dir, f"{mode}_id_slug_map.json")
-    data_dir = os.path.join(base_dir, f"{mode}_data_json")
+def main(folder):
+    # Extract mode (training/test) from folder name
+    if folder.startswith("training"):
+        mode = "training"
+    elif folder.startswith("test"):
+        mode = "test"
+    else:
+        mode = folder.split("_")[0]
+    
+    mapping_file = os.path.join(folder, f"{mode}_id_slug_map.json")
+    data_dir = os.path.join(folder, f"{mode}_data_json")
 
     if not os.path.exists(mapping_file):
         print(f"No mapping file found at {mapping_file}")
@@ -49,8 +56,8 @@ def main(mode):
     print(f"Renamed {renamed_count} files.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Rename JSON files for training or test data.")
-    parser.add_argument("mode", choices=["training", "test"], help="Mode: 'training' or 'test'")
+    parser = argparse.ArgumentParser(description="Rename JSON files in a data folder.")
+    parser.add_argument("folder", help="Data folder name (e.g., 'training_data_haven', 'test_data_abyss')")
     args = parser.parse_args()
 
-    main(args.mode)
+    main(args.folder)
