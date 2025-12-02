@@ -352,21 +352,33 @@ def get_time_remaining(img):
     img- the gameplay screenshot loaded with openCV
 
     output:
-    an integer value representing the seconds remaining in the round if the spike has not yet been planted, or None if the spike has been planted
+    a tuple of an integer value representing the seconds remaining in the round if the spike has not yet been planted and a boolean value True or False whether it has been planted
     """
-    timeleft_xywh = (918, 23, 80, 42)
+    timeleft1_xywh = (925, 25, 23, 40)
+    timeleft2_xywh = (955, 25, 41, 40)
 
-    x, y, w, h = timeleft_xywh
+    x, y, w, h = timeleft1_xywh
     roi = img[y:y+h, x:x+w]
     results = reader.readtext(roi)
+    print(results)
 
-    if not results:
-        return None
+    try:
+        minutes = int(results[0][1])
+    except:
+        return (45, True)
+    
+    x, y, w, h = timeleft2_xywh
+    roi = img[y:y+h, x:x+w]
+    results = reader.readtext(roi)
+    print(results)
 
-    # The return value of reader.readtext returns an array of tuples, but we are only expecting one entry so can hardcode the indexing to get the text contents
-    minutes, seconds = results[0][1].split(".")
-    time_remaining = int(minutes) * 60 + int(seconds)
-    return time_remaining
+    try:
+        seconds = int(results[0][1])
+    except:
+        seconds = 45
+
+    time_remaining = (int(minutes) * 60) + int(seconds)
+    return (time_remaining, False)
 
 def get_players_alive(img, t):
     """
@@ -424,7 +436,7 @@ def get_alive_player_agents(img, t, players_alive, templates):
         if players_alive[curr] == 1:
             roi = img[y:y+h, x:x+w]
             res.append(match_icon_sift(roi, templates))
-            curr += 1
+        curr += 1
     
     return res
 
@@ -637,12 +649,10 @@ def get_team_credits(img, t, players_alive, agents_alive, gun_templates):
 
 # Aggregate scraped data to be fed into the classifier model
 
-time_remaining = get_time_remaining(img)
+time_remaining, spike_planted = get_time_remaining(img)
 print(f"Time remaining: {time_remaining}")
 
-spike_planted = False
-if not time_remaining:
-    spike_planted = True
+print("Spike planted: " + str(spike_planted))
 
 t1_players_alive = get_players_alive(img, 1)
 t2_players_alive = get_players_alive(img, 2)
@@ -669,31 +679,31 @@ print("========================\n")
 atk_team = get_atk_team(img)
 
 if atk_team == 1:
-    atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
-    def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
+    atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
+    def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
     atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
     def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
 else:
-    atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
-    def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
+    atk_agents_alive, atk_duelists_alive, atk_initiators_alive, atk_sentinels_alive, atk_controllers_alive = t2_agents_alive, t2_duelists_alive, t2_initiators_alive, t2_sentinels_alive, t2_controllers_alive
+    def_agents_alive, def_duelists_alive, def_initiators_alive, def_sentinels_alive, def_controllers_alive = t1_agents_alive, t1_duelists_alive, t1_initiators_alive, t1_sentinels_alive, t1_controllers_alive
     atk_weapon_credits, atk_shield_credits, atk_ability_credits, atk_credits = t2_weapon_credits, t2_shield_credits, t2_ability_credits, t2_total_credits
     def_weapon_credits, def_shield_credits, def_ability_credits, def_credits = t1_weapon_credits, t1_shield_credits, t1_ability_credits, t1_total_credits
 
-print("Atk agents alive: " + str(t1_agents_alive))
-print(f"Atk - Duelists: {t1_duelists_alive}")
-print(f"Atk - Initiators: {t1_initiators_alive}")
-print(f"Atk - Sentinels: {t1_sentinels_alive}")
-print(f"Atk - Controllers: {t1_controllers_alive}")
+print("Atk agents alive: " + str(atk_agents_alive))
+print(f"Atk - Duelists: {atk_duelists_alive}")
+print(f"Atk - Initiators: {atk_initiators_alive}")
+print(f"Atk - Sentinels: {atk_sentinels_alive}")
+print(f"Atk - Controllers: {atk_controllers_alive}")
 print(f"Atk - Weapon Credits: {atk_weapon_credits}")
 print(f"Atk - Shield Credits: {atk_shield_credits}")
 print(f"Atk - Ability Credits: {atk_ability_credits}")
 print(f"Atk - Total Credits: {atk_credits}")
 print("======================")
-print("Def agents alive: " + str(t2_agents_alive))
-print(f"Def - Duelists: {t2_duelists_alive}")
-print(f"Def - Initiators: {t2_initiators_alive}")
-print(f"Def - Sentinels: {t2_sentinels_alive}")
-print(f"Def - Controllers: {t2_controllers_alive}")
+print("Def agents alive: " + str(def_agents_alive))
+print(f"Def - Duelists: {def_duelists_alive}")
+print(f"Def - Initiators: {def_initiators_alive}")
+print(f"Def - Sentinels: {def_sentinels_alive}")
+print(f"Def - Controllers: {def_controllers_alive}")
 print(f"Def - Weapon Credits: {def_weapon_credits}")
 print(f"Def - Shield Credits: {def_shield_credits}")
 print(f"Def - Ability Credits: {def_ability_credits}")
