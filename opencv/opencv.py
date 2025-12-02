@@ -366,7 +366,7 @@ def get_time_remaining(img):
     x, y, w, h = timeleft1_xywh
     roi = img[y:y+h, x:x+w]
     results = reader.readtext(roi)
-    print(results)
+    # print(results)
 
     try:
         minutes = int(results[0][1])
@@ -376,7 +376,7 @@ def get_time_remaining(img):
     x, y, w, h = timeleft2_xywh
     roi = img[y:y+h, x:x+w]
     results = reader.readtext(roi)
-    print(results)
+    # print(results)
 
     try:
         seconds = int(results[0][1])
