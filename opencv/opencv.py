@@ -646,11 +646,6 @@ def get_team_credits(img, t, players_alive, agents_alive, gun_templates):
     
     total_credits = weapon_credits + shield_credits + ability_credits
     
-    # Print debug info
-    print(f"  Team {t} Weapons: {weapons_detected} = {weapon_credits}")
-    print(f"  Team {t} Shields: {shields_detected} = {shield_credits}")
-    print(f"  Team {t} Abilities: {abilities_detected} = {ability_credits}")
-    
     return weapon_credits, shield_credits, ability_credits, total_credits
 
 # =============================================================================
